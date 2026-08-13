@@ -32,6 +32,7 @@ RUN apt-get update \
     fi \
     && python3 -m venv /opt/zephyr-venv \
     && /opt/zephyr-venv/bin/pip install --no-cache-dir --upgrade pip west \
+    && chown -R vscode:vscode /opt/zephyr-venv \
     && install -d -o vscode -g vscode /opt/zephyrproject "/opt/zephyr-sdk-${ZEPHYR_SDK_VERSION}" \
     && rm -rf /var/lib/apt/lists/*
 
