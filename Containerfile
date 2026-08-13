@@ -51,13 +51,21 @@ RUN west init \
     && west update \
     && west packages pip --install \
     && west blobs --auto-accept fetch hal_espressif \
-    && west zephyr-export \
-    && cd /opt/zephyrproject/zephyr \
+    && west zephyr-export
+
+# The SDK installer stages its archive beside --install-dir. Run only this
+# installation step as root, then return ownership to the development user.
+USER root
+
+RUN cd /opt/zephyrproject/zephyr \
     && read -r -a toolchains <<< "${ZEPHYR_SDK_TOOLCHAINS}" \
     && west sdk install \
         --version "${ZEPHYR_SDK_VERSION}" \
         --install-dir "/opt/zephyr-sdk-${ZEPHYR_SDK_VERSION}" \
-        --toolchains "${toolchains[@]}"
+        --gnu-toolchains "${toolchains[@]}" \
+    && chown -R vscode:vscode "/opt/zephyr-sdk-${ZEPHYR_SDK_VERSION}"
+
+USER vscode
 
 WORKDIR /workspaces
 
