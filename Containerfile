@@ -57,7 +57,8 @@ RUN west init \
 # installation step as root, then return ownership to the development user.
 USER root
 
-RUN cd /opt/zephyrproject/zephyr \
+RUN rmdir "/opt/zephyr-sdk-${ZEPHYR_SDK_VERSION}" \
+    && cd /opt/zephyrproject/zephyr \
     && read -r -a toolchains <<< "${ZEPHYR_SDK_TOOLCHAINS}" \
     && west sdk install \
         --version "${ZEPHYR_SDK_VERSION}" \
