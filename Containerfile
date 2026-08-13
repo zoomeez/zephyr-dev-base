@@ -50,7 +50,7 @@ RUN west init \
     && cd /opt/zephyrproject \
     && west update \
     && west packages pip --install \
-    && west blobs fetch --auto-accept hal_espressif \
+    && west blobs --auto-accept fetch hal_espressif \
     && west zephyr-export \
     && cd /opt/zephyrproject/zephyr \
     && read -r -a toolchains <<< "${ZEPHYR_SDK_TOOLCHAINS}" \
