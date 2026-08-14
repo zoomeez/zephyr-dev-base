@@ -1,8 +1,15 @@
 # Zephyr development base
 
-A reproducible, multi-architecture OCI base image containing Zephyr, its modules, Python dependencies, binary blobs, and selected Zephyr SDK toolchains.
+A reproducible, multi-architecture OCI image family for full and selectively provisioned Zephyr development environments.
 
-The image is intended to be the immutable lower layer for many application devcontainers:
+Two image targets are published:
+
+| Tag | Contents |
+|---|---|
+| `core-4.4.2` | Host packages, Python environment, West, and the pinned Zephyr repository only |
+| `4.4.2` | The core plus every active West project and the default ARM, RISC-V, and x86-64 toolchains |
+
+The full image remains a batteries-included immutable lower layer:
 
 ```text
 ghcr.io/zoomeez/zephyr-dev-base:4.4.2
@@ -16,6 +23,8 @@ ghcr.io/zoomeez/zephyr-dev-base:4.4.2
     └── x86_64-zephyr-elf
 ```
 
+The core image is intended for CI-built profiles which apply a West project filter and install only the SDK toolchains required by their declared boards. It is not itself a complete application build environment.
+
 The image build fetches Espressif HAL blobs with Zephyr's non-interactive license-acceptance flag. Review the blob licenses from the pinned Zephyr/module revisions before distributing or consuming the image in an environment with additional licensing requirements.
 
 Container image layers are content-addressed and immutable. Projects based on the same image reuse those layers instead of maintaining separate `west update` results or SDK installations. Each running container receives a small writable overlay; application sources and build output should live in separate writable mounts.
@@ -26,6 +35,15 @@ Container image layers are content-addressed and immutable. Projects based on th
 FROM ghcr.io/zoomeez/zephyr-dev-base:4.4.2
 
 # Add only project-specific tools here.
+```
+
+For a selectively provisioned image:
+
+```dockerfile
+FROM ghcr.io/zoomeez/zephyr-dev-base:core-4.4.2
+
+# Configure active West projects, run west update, install Python requirements,
+# fetch required blobs, and install the selected SDK toolchains in this image.
 ```
 
 The image exports:
@@ -73,6 +91,8 @@ The GitHub Actions workflow builds `linux/amd64` and `linux/arm64` images and pu
 ```text
 ghcr.io/zoomeez/zephyr-dev-base:4.4.2
 ghcr.io/zoomeez/zephyr-dev-base:latest
+ghcr.io/zoomeez/zephyr-dev-base:core-4.4.2
+ghcr.io/zoomeez/zephyr-dev-base:core-latest
 ```
 
 Tags beginning with `v` also produce a matching OCI tag.

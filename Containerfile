@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/devcontainers/base:ubuntu-24.04
+FROM mcr.microsoft.com/devcontainers/base:ubuntu-24.04 AS core
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
@@ -33,7 +33,7 @@ RUN apt-get update \
     && python3 -m venv /opt/zephyr-venv \
     && /opt/zephyr-venv/bin/pip install --no-cache-dir --upgrade pip west \
     && chown -R vscode:vscode /opt/zephyr-venv \
-    && install -d -o vscode -g vscode /opt/zephyrproject "/opt/zephyr-sdk-${ZEPHYR_SDK_VERSION}" \
+    && install -d -o vscode -g vscode /opt/zephyrproject \
     && rm -rf /var/lib/apt/lists/*
 
 ENV PATH="/opt/zephyr-venv/bin:${PATH}"
@@ -46,8 +46,19 @@ USER vscode
 RUN west init \
         -m https://github.com/zephyrproject-rtos/zephyr \
         --mr "${ZEPHYR_REVISION}" \
-        /opt/zephyrproject \
-    && cd /opt/zephyrproject \
+        /opt/zephyrproject
+
+WORKDIR /workspaces
+
+LABEL org.opencontainers.image.source="https://github.com/zoomeez/zephyr-dev-base"
+LABEL org.opencontainers.image.description="Pinned Zephyr core for selectively provisioned workspaces"
+
+FROM core AS full
+
+ARG ZEPHYR_SDK_VERSION=1.0.1
+ARG ZEPHYR_SDK_TOOLCHAINS="arm-zephyr-eabi riscv64-zephyr-elf x86_64-zephyr-elf"
+
+RUN cd /opt/zephyrproject \
     && west update \
     && west packages pip --install \
     && west blobs --auto-accept fetch hal_espressif \
@@ -57,8 +68,7 @@ RUN west init \
 # installation step as root, then return ownership to the development user.
 USER root
 
-RUN rmdir "/opt/zephyr-sdk-${ZEPHYR_SDK_VERSION}" \
-    && cd /opt/zephyrproject/zephyr \
+RUN cd /opt/zephyrproject/zephyr \
     && read -r -a toolchains <<< "${ZEPHYR_SDK_TOOLCHAINS}" \
     && west sdk install \
         --version "${ZEPHYR_SDK_VERSION}" \
